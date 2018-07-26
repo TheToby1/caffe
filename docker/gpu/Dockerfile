@@ -45,12 +45,12 @@ RUN touch /root/.ssh/known_hosts
 # Add bitbuckets key
 RUN ssh-keyscan github.com >> /root/.ssh/known_hosts
 
-RUN git clone -b ${CLONE_TAG} --depth 1 https://github.com/BVLC/caffe.git . && \
+RUN git clone -b ${CLONE_TAG} --depth 1 git@github.com:TheToby1/caffe.git . && \
     # pip3 install --upgrade pip && \
     pip3 install wheel && \
     cd python && for req in $(cat requirements.txt) pydot; do pip3 install $req; done && cd .. && \
-    git clone https://github.com/NVIDIA/nccl.git && cd nccl && make -j install && cd .. && rm -rf nccl && cd .. && \
-    git clone git@github.com:TheToby1/bilateralNN.git && cd bilateralNN && mkdir build && cd build && cmake -DCAFFE_SRC=../../caffe .. && make -j && cd ../../caffe && \
+    git clone https://github.com/NVIDIA/nccl.git && cd nccl && make -j install && cd .. && rm -rf nccl && \
+    # git clone git@github.com:TheToby1/bilateralNN.git && cd bilateralNN && mkdir build && cd build && cmake -DCAFFE_SRC=../../caffe .. && make -j && cd ../../caffe && \
     mkdir build && cd build && \
     cmake -DUSE_CUDNN=1 -DUSE_NCCL=1 .. && \
     make -j"$(nproc)"
