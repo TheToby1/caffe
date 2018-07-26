@@ -47,7 +47,6 @@ RUN ssh-keyscan github.com >> /root/.ssh/known_hosts
 
 RUN git clone -b ${CLONE_TAG} --depth 1 git@github.com:TheToby1/caffe.git . && \
     # pip3 install --upgrade pip && \
-    pip3 install wheel && \
     cd python && for req in $(cat requirements.txt) pydot; do pip3 install $req; done && cd .. && \
     git clone https://github.com/NVIDIA/nccl.git && cd nccl && make -j install && cd .. && rm -rf nccl && \
     # git clone git@github.com:TheToby1/bilateralNN.git && cd bilateralNN && mkdir build && cd build && cmake -DCAFFE_SRC=../../caffe .. && make -j && cd ../../caffe && \
@@ -55,7 +54,7 @@ RUN git clone -b ${CLONE_TAG} --depth 1 git@github.com:TheToby1/caffe.git . && \
     cmake -DUSE_CUDNN=1 -DUSE_NCCL=1 .. && \
     make -j"$(nproc)"
 
-ENV PYCAFFE_ROOT $CAFFE_ROOT/python3
+ENV PYCAFFE_ROOT $CAFFE_ROOT/python
 ENV PYTHONPATH $PYCAFFE_ROOT:$PYTHONPATH
 ENV PATH $CAFFE_ROOT/build/tools:$PYCAFFE_ROOT:$PATH
 RUN echo "$CAFFE_ROOT/build/lib" >> /etc/ld.so.conf.d/caffe.conf && ldconfig
