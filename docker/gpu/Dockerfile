@@ -45,7 +45,7 @@ RUN touch /root/.ssh/known_hosts
 # Add bitbuckets key
 RUN ssh-keyscan github.com >> /root/.ssh/known_hosts
 
-RUN git clone -b ${CLONE_TAG} --depth 1 git@github.com:TheToby1/caffe.git . && \
+RUN git clone --depth 1 git@github.com:TheToby1/caffe.git . && \
     # pip3 install --upgrade pip && \
     cd python && for req in $(cat requirements.txt) pydot; do pip3 install $req; done && cd .. && \
     git clone https://github.com/NVIDIA/nccl.git && cd nccl && make -j install && cd .. && rm -rf nccl && \
