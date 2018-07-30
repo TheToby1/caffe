@@ -40,16 +40,17 @@ RUN mkdir /root/.ssh/
 RUN echo "${SSH_PRIVATE_KEY}" > /root/.ssh/id_rsa && \
     chmod 600 /root/.ssh/id_rsa
 
+# RUN echo "${SSH_PRIVATE_KEY}}"
 # Create known_hosts
 RUN touch /root/.ssh/known_hosts
 # Add bitbuckets key
 RUN ssh-keyscan github.com >> /root/.ssh/known_hosts
 
-RUN git clone --depth 1 git@github.com:TheToby1/caffe.git . && \
+ARG REBUILD_CAFFE
+RUN REBUILD_CAFFE="${REBUILD_CAFFE}" git clone --depth 1 git@github.com:TheToby1/caffe.git . && \
     # pip3 install --upgrade pip && \
     cd python && for req in $(cat requirements.txt) pydot; do pip3 install $req; done && cd .. && \
     git clone https://github.com/NVIDIA/nccl.git && cd nccl && make -j install && cd .. && rm -rf nccl && \
-    # git clone git@github.com:TheToby1/bilateralNN.git && cd bilateralNN && mkdir build && cd build && cmake -DCAFFE_SRC=../../caffe .. && make -j && cd ../../caffe && \
     mkdir build && cd build && \
     cmake -DUSE_CUDNN=1 -DUSE_NCCL=1 .. && \
     make -j"$(nproc)"
