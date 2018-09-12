@@ -153,6 +153,22 @@ shared_ptr<Layer<Dtype> > GetPoolingLayer(const LayerParameter& param) {
 
 REGISTER_LAYER_CREATOR(Pooling, GetPoolingLayer);
 
+	// Get pooling layer according to engine.
+template <typename Dtype>
+shared_ptr<Layer<Dtype> > GetPaddingLayer(const LayerParameter& param) {
+  PaddingParameter_Engine engine = param.padding_param().engine();
+  if (engine == PaddingParameter_Engine_DEFAULT) {
+    engine = PaddingParameter_Engine_CAFFE;
+  }
+  if (engine == PaddingParameter_Engine_CAFFE) {
+    return shared_ptr<Layer<Dtype> >(new PaddingLayer<Dtype>(param));
+  } else {
+    LOG(FATAL) << "Layer " << param.name() << " has unknown engine.";
+  }
+}
+ REGISTER_LAYER_CREATOR(Padding, GetPaddingLayer);
+
+
 // Get LRN layer according to engine
 template <typename Dtype>
 shared_ptr<Layer<Dtype> > GetLRNLayer(const LayerParameter& param) {
