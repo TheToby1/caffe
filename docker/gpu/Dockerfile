@@ -36,7 +36,7 @@ ARG REBUILD_CAFFE
 RUN REBUILD_CAFFE="${REBUILD_CAFFE}" git clone --depth 1 https://github.com/TheToby1/caffe.git . && \
     # pip3 install --upgrade pip && \
     cd python && for req in $(cat requirements.txt) pydot; do pip3 install $req; done && cd .. && \
-    git clone https://github.com/NVIDIA/nccl.git && cd nccl && make -j install && cd .. && rm -rf nccl && \
+    git clone https://github.com/NVIDIA/nccl.git && cd nccl && make -j src.build install && cd .. && rm -rf nccl && \
     mkdir build && cd build && \
     cmake -DUSE_CUDNN=1 -DUSE_NCCL=1 .. && \
     make -j"$(nproc)"
