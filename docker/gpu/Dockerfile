@@ -7,6 +7,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         git \
         ssh \
         wget \
+        curl \
+        unzip \
+        autoconf \
+        autogen \
+        automake \
         libatlas-base-dev \
         libboost-all-dev \
         libgflags-dev \
@@ -15,15 +20,24 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libleveldb-dev \
         liblmdb-dev \
         libopencv-dev \
-        libprotobuf-dev \
         libsnappy-dev \
-        protobuf-compiler \
         python3-dev \
         python3-numpy \
         python3-pip \
         python3-setuptools \
         python3-scipy && \
     rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libtool && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN curl -OL https://github.com/protocolbuffers/protobuf/releases/download/v3.1.0/protobuf-cpp-3.1.0.zip && \
+    unzip protobuf-cpp-3.1.0.zip && \
+    cd protobuf-3.1.0 && ./autogen.sh && ./configure && make && make install && cd .. / rm -rf protobuf-3.1.0 && \
+    ldconfig
+    # chown $USER /usr/local/bin/protoc && \
+    # chown -R $USER /usr/local/include/google
 
 ENV CAFFE_ROOT=/opt/caffe
 WORKDIR $CAFFE_ROOT
