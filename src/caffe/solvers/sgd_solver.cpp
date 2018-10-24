@@ -63,7 +63,37 @@ Dtype SGDSolver<Dtype>::GetLearningRate() {
     rate = this->param_.base_lr() * (Dtype(1.) /
         (Dtype(1.) + exp(-this->param_.gamma() * (Dtype(this->iter_) -
           Dtype(this->param_.stepsize())))));
-  } else {
+  } else if (lr_policy == "triangular") {
+      CHECK_GE(this->param_.gamma(), 0);
+      CHECK_GT(this->param_.stepsize(), 0);
+      CHECK_GT(this->param_.max_lr(), 0);
+      if(this->iter_ > 0){
+          int cycle = this->iter_ / (2*this->param_.stepsize());
+          float x = (float) (this->iter_ - (2*cycle+1)*this->param_.stepsize());
+          x /= this-> param_.stepsize();
+          rate =  this->param_.base_lr() + (this->param_.max_lr()-this->param_.base_lr())
+                    * std::max(double(0), (1.0-fabs(x)));
+      }
+      else{
+          rate = this->param_.base_lr();
+      }
+  }
+  else if (lr_policy == "triangular2") {
+      CHECK_GE(this->param_.gamma(), 0);
+      CHECK_GT(this->param_.stepsize(), 0);
+      CHECK_GT(this->param_.max_lr(), 0);
+      if(this->iter_ > 0){
+          int cycle = this->iter_ / (2*this->param_.stepsize());
+          float x = (float) (this->iter_ - (2*cycle+1)*this->param_.stepsize());
+          x /= this-> param_.stepsize();
+          rate =  this->param_.base_lr() + (this->param_.max_lr()-this->param_.base_lr())
+                    * std::min(double(1), std::max(double(0), (1.0 - fabs(x))/pow(2.0, double(cycle))));
+      }
+      else{
+          rate = this->param_.base_lr();
+      }
+  }
+   else {
     LOG(FATAL) << "Unknown learning rate policy: " << lr_policy;
   }
   return rate;
