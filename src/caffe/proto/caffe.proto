@@ -324,7 +324,7 @@ message ParamSpec {
 // NOTE
 // Update the next available ID when you add a new LayerParameter field.
 //
-// LayerParameter next available layer-specific ID: 150 (last added: permutohedral_param)
+// LayerParameter next available layer-specific ID: 151 (last added: pixel_feature_param)
 message LayerParameter {
   optional string name = 1; // the layer name
   optional string type = 2; // the layer type
