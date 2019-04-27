@@ -38,6 +38,7 @@ void KnnLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
     top_shape.push_back(1);
 
     top[0]->Reshape(top_shape);
+    top[1]->Reshape(top_shape);
 }
 
 template <typename Dtype>
@@ -47,6 +48,7 @@ void KnnLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
     const Dtype* ref = bottom[0]->cpu_data();
     const Dtype* query = bottom[1]->cpu_data();
     Dtype* k_index = top[0]->mutable_cpu_data();
+    Dtype* k_dist = top[1]->mutable_cpu_data();
 
     int batch_size = bottom[0]->shape(0);
 
@@ -70,7 +72,8 @@ void KnnLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
             // Copy k smallest distances and their associated index
             int start = ignore_self_ ? 1 : 0;
             for (int j = start; j < k_ + start; ++j) {
-                k_index[(b * k_ + (j - start)) * ref_size_ + i] = index[j - start];
+                k_index[(b * k_ + (j - start)) * ref_size_ + i] = index[j];
+                k_dist[(b * k_ + (j - start)) * ref_size_ + i] = dist[j];
             }
         }
     }
@@ -126,15 +129,15 @@ void KnnLayer<Dtype>::modified_insertion_sort(Dtype* dist, int* index)
         // Store current distance and associated index
         Dtype curr_dist = dist[i];
         int curr_index = i;
-        int extra = ignore_self_ ? 0 : 1;
-        // Skip the current value if its index is >= k and if it's higher the k-th slready sorted mallest value
-        if (i >= k_ + (1 - extra) && curr_dist >= dist[k_ - extra]) {
+        int k = ignore_self_ ? k_ + 1 : k_;
+        // Skip the current value if its index is > k and if it's higher the k-th already sorted smallest value
+        if (i >= k && curr_dist >= dist[k - 1]) {
             continue;
         }
 
         // Shift values (and indexes) higher that the current distance to the right
 
-        int j = std::min(i, k_ - extra);
+        int j = std::min(i, k - 1);
         while (j > 0 && dist[j - 1] > curr_dist) {
             dist[j] = dist[j - 1];
             index[j] = index[j - 1];

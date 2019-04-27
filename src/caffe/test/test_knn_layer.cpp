@@ -27,6 +27,7 @@ protected:
         blob_bottom_vec_.push_back(blob_bottom_);
         blob_bottom_vec_.push_back(blob_bottom_2_);
         blob_top_vec_.push_back(blob_top_);
+        blob_top_vec_.push_back(blob_top_2_);
     }
     virtual ~KnnLayerTest()
     {
@@ -37,6 +38,7 @@ protected:
     Blob<Dtype>* const blob_bottom_;
     Blob<Dtype>* const blob_bottom_2_;
     Blob<Dtype>* const blob_top_;
+    Blob<Dtype>* const blob_top_2_;
     vector<Blob<Dtype>*> blob_bottom_vec_;
     vector<Blob<Dtype>*> blob_top_vec_;
 };
@@ -91,9 +93,11 @@ TYPED_TEST(KnnLayerTest, TestForward)
     layer->Forward(this->blob_bottom_vec_, this->blob_top_vec_);
     // Now, check values
     const int ans[] = { 0, 1, 2, 1, 0, 2, 2, 1, 3, 3, 2, 1, 0, 1, 2, 1, 0, 2, 2, 1, 3, 3, 2, 1 };
-    const Dtype* top_data = this->blob_top_->cpu_data();
+    const Dtype* top_idx = this->blob_top_->cpu_data();
+    const Dtype* top_idx = this->blob_top_2_->cpu_data();
     for (int i = 0; i < this->blob_top_->count(); ++i) {
-        EXPECT_EQ(static_cast<int>(top_data[i]), ans[i]);
+        EXPECT_EQ(static_cast<int>(top_idx[i]), -1);
+        EXPECT_EQ(top_dist[i], -1.);
     }
 }
 
