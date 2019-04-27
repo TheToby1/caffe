@@ -20,10 +20,10 @@ void KnnLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
     ignore_self_ = param.ignore_self();
     k_ = param.k();
     axis_ = param.axis();
-    channels_ = bottom[0].shape(1);
+    channels_ = bottom[0]->shape(1);
 
-    ref_size_ = bottom[0].shape(axis_);
-    query_size_ = bottom[1].shape(axis_);
+    ref_size_ = bottom[0]->shape(axis_);
+    query_size_ = bottom[1]->shape(axis_);
 }
 
 template <typename Dtype>
@@ -52,7 +52,7 @@ void KnnLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
 
     for (int b = 0; b < batch_size; ++b) {
         // Process one query point at a time
-        Dtype* dist = (float*)malloc(ref_size_ * sizeof(Dtype));
+        Dtype* dist = (Dtype*)malloc(ref_size_ * sizeof(Dtype));
         int* index = (int*)malloc(ref_size_ * sizeof(int));
 
         const Dtype* cur_ref = ref + b * channels_;
@@ -94,7 +94,7 @@ float KnnLayer<Dtype>::compute_distance(const Dtype* ref,
 {
     Dtype sum = 0.f;
     for (int d = 0; d < channels_; ++d) {
-        const Dtype diff = ref[d * ref_size_ + ref_index] - query[d * __ + query_index];
+        const Dtype diff = ref[d * ref_size_ + ref_index] - query[d * query_size_ + query_index];
         sum += diff * diff;
     }
     return sqrtf(sum);
