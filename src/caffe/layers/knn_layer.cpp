@@ -38,7 +38,6 @@ void KnnLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
     top_shape.push_back(1);
 
     top[0]->Reshape(top_shape);
-    top[1]->Reshape(top_shape);
 }
 
 template <typename Dtype>
@@ -48,7 +47,6 @@ void KnnLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
     const Dtype* ref = bottom[0]->cpu_data();
     const Dtype* query = bottom[1]->cpu_data();
     Dtype* k_index = top[0]->mutable_cpu_data();
-    Dtype* k_dist = top[1]->mutable_cpu_data();
 
     int batch_size = bottom[0]->shape(0);
 
@@ -73,7 +71,6 @@ void KnnLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
             int start = ignore_self_ ? 1 : 0;
             for (int j = start; j < k_ + start; ++j) {
                 k_index[(b * k_ + (j - start)) * ref_size_ + i] = index[j];
-                k_dist[(b * k_ + (j - start)) * ref_size_ + i] = dist[j];
             }
         }
     }

@@ -22,13 +22,11 @@ protected:
         : blob_bottom_(new Blob<Dtype>(2, 3, 4, 1))
         , blob_bottom_2_(new Blob<Dtype>(2, 3, 4, 1))
         , blob_top_(new Blob<Dtype>())
-        , blob_top_2_(new Blob<Dtype>())
     {
         Caffe::set_random_seed(1701);
         blob_bottom_vec_.push_back(blob_bottom_);
         blob_bottom_vec_.push_back(blob_bottom_2_);
         blob_top_vec_.push_back(blob_top_);
-        blob_top_vec_.push_back(blob_top_2_);
     }
     virtual ~KnnLayerTest()
     {
@@ -39,7 +37,6 @@ protected:
     Blob<Dtype>* const blob_bottom_;
     Blob<Dtype>* const blob_bottom_2_;
     Blob<Dtype>* const blob_top_;
-    Blob<Dtype>* const blob_top_2_;
     vector<Blob<Dtype>*> blob_bottom_vec_;
     vector<Blob<Dtype>*> blob_top_vec_;
 };
@@ -95,10 +92,8 @@ TYPED_TEST(KnnLayerTest, TestForward)
     // Now, check values
     const int ans[] = { 0, 1, 2, 3, 1, 0, 1, 2, 2, 2, 3, 1, 0, 1, 2, 3, 1, 0, 1, 2, 2, 2, 3, 1 };
     const Dtype* top_idx = this->blob_top_->cpu_data();
-    const Dtype* top_dist = this->blob_top_2_->cpu_data();
     for (int i = 0; i < this->blob_top_->count(); ++i) {
         EXPECT_EQ(static_cast<int>(top_idx[i]), ans[i]);
-        // EXPECT_EQ(top_dist[i], -1.);
     }
 }
 
