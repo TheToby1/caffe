@@ -22,6 +22,7 @@ protected:
         : blob_bottom_(new Blob<Dtype>(2, 3, 4, 1))
         , blob_bottom_2_(new Blob<Dtype>(2, 3, 4, 1))
         , blob_top_(new Blob<Dtype>())
+        , blob_top_2_(new Blob<Dtype>())
     {
         Caffe::set_random_seed(1701);
         blob_bottom_vec_.push_back(blob_bottom_);
