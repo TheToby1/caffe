@@ -7,7 +7,7 @@
 
 namespace caffe {
     template <typename Dtype>
-    void SinLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
+    void KnnLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
         const vector<Blob<Dtype>*>& top) {
     const Dtype* bottom_data = bottom[0]->gpu_data();
     Dtype* top_data = top[0]->mutable_gpu_data();
@@ -16,6 +16,7 @@ namespace caffe {
     
     CUDA_POST_KERNEL_CHECK;
     }
+
 
     INSTANTIATE_LAYER_GPU_FUNCS(KnnLayer);
 
