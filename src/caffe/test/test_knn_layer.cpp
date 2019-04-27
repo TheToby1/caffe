@@ -93,7 +93,7 @@ TYPED_TEST(KnnLayerTest, TestForward)
     const int ans[] = { 0, 1, 2, 1, 0, 2, 2, 1, 3, 3, 2, 1, 0, 1, 2, 1, 0, 2, 2, 1, 3, 3, 2, 1 };
     const Dtype* top_data = this->blob_top_->cpu_data();
     for (int i = 0; i < this->blob_top_->count(); ++i) {
-        EXPECT_EQ(static_cast<int> top_data[i], ans[i]);
+        EXPECT_EQ(static_cast<int>(top_data[i]), ans[i]);
     }
 }
 
