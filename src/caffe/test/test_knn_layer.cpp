@@ -37,6 +37,8 @@ protected:
     Blob<Dtype>* const blob_bottom_;
     Blob<Dtype>* const blob_bottom_2_;
     Blob<Dtype>* const blob_top_;
+    vector<Blob<Dtype>*> blob_bottom_vec_;
+    vector<Blob<Dtype>*> blob_top_vec_;
 };
 TYPED_TEST_CASE(KnnLayerTest, TestDtypesAndDevices);
 
