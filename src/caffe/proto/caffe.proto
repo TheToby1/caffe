@@ -324,7 +324,7 @@ message ParamSpec {
 // NOTE
 // Update the next available ID when you add a new LayerParameter field.
 //
-// LayerParameter next available layer-specific ID: 151 (last added: pixel_feature_param)
+// LayerParameter next available layer-specific ID: 152 (last added: knn_param)
 message LayerParameter {
   optional string name = 1; // the layer name
   optional string type = 2; // the layer type
@@ -425,6 +425,7 @@ message LayerParameter {
   optional ThresholdParameter threshold_param = 128;
   optional TileParameter tile_param = 138;
   optional WindowDataParameter window_data_param = 129;
+  optional KnnParameter knn_param = 151;
 }
 
 // Message that stores parameters used to apply transformation
@@ -1519,4 +1520,14 @@ message PReLUParameter {
   optional FillerParameter filler = 1;
   // Whether or not slope parameters are shared across channels.
   optional bool channel_shared = 2 [default = false];
+}
+
+message KnnParameter {
+  // The axis referencing the index of the points
+  optional int32 axis = 1 [default = 2];
+
+  // the number of nearest neighbours to find
+  optional int32 k = 2 [default = 1];
+
+  optional bool ignore_self = 3 [default = false];
 }

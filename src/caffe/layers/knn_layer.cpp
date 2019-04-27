@@ -1,59 +1,82 @@
 // Knn search layer.
 // Adapted from https://github.com/vincentfpgarcia/kNN-CUDA.git Vincent Garcia, Éric Debreuve, Michel Barlaud
 
+#include <algorithm>
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <vector>
 
 #include "caffe/layers/knn_layer.hpp"
 
-namespace caffe
-{
+namespace caffe {
+
 template <typename Dtype>
-void SinLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype> *> &bottom,
-                                  const vector<Blob<Dtype> *> &top)
+void KnnLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
+    const vector<Blob<Dtype>*>& top)
 {
-    const Dtype *bottom_data = bottom[0]->cpu_data();
-    Dtype *top_data = top[0]->mutable_cpu_data();
-    const int count = bottom[0]->count();
+    const KnnParameter& param = this->layer_param_.knn_param();
 
-    // Process one query point at the time
-    for (int i = 0; i < query_nb; ++i)
-    {
+    ignore_self_ = param.ignore_self();
+    k_ = param.k();
+    axis_ = param.axis();
+    channels_ = bottom[0].shape(1);
 
-        // Compute all distances / indexes
-        for (int j = 0; j < ref_nb; ++j)
-        {
-            dist[j] = compute_distance(ref, ref_nb, query, query_nb, dim, j, i);
-            index[j] = j;
-        }
-
-        // Sort distances / indexes
-        modified_insertion_sort(dist, index, ref_nb, k);
-
-        // Copy k smallest distances and their associated index
-        for (int j = 0; j < k; ++j)
-        {
-            knn_dist[j * query_nb + i] = dist[j];
-            knn_index[j * query_nb + i] = index[j];
-        }
-    }
+    ref_size_ = bottom[0].shape(axis_);
+    query_size_ = bottom[1].shape(axis_);
 }
 
 template <typename Dtype>
-void SinLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype> *> &top,
-                                   const vector<bool> &propagate_down,
-                                   const vector<Blob<Dtype> *> &bottom)
+void KnnLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
+    const vector<Blob<Dtype>*>& top)
 {
-    if (propagate_down[0])
-    {
-        const Dtype *bottom_data = bottom[0]->cpu_data();
-        const Dtype *top_diff = top[0]->cpu_diff();
-        Dtype *bottom_diff = bottom[0]->mutable_cpu_diff();
-        const int count = bottom[0]->count();
-        Dtype bottom_datum;
-        for (int i = 0; i < count; ++i)
-        {
-            bottom_datum = bottom_data[i];
-            bottom_diff[i] = top_diff[i] * cos(bottom_datum);
+    vector<int> top_shape();
+
+    top_shape.push_back(bottom[1].shape(0));
+    top_shape.push_back(k_);
+    top_shape.push_back(bottom[1].shape(axis_));
+    top_shape.push_back(1);
+
+    top[0]->Reshape(top_shape);
+}
+
+template <typename Dtype>
+void KnnLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+    const vector<Blob<Dtype>*>& top)
+{
+    const KnnParameter& param = this->layer_param_.knn_param();
+
+    const Dtype* ref = bottom[0]->cpu_data();
+    const Dtype* query = bottom[1]->cpu_data();
+    Dtype* k_index = top[0]->mutable_cpu_data();
+
+    int batch_size = ref.shape(0);
+    int ref_size = ref.shape(axis_);
+    int query_size = query.shape(axis_);
+
+    for (int b = 0; b < batch_size; ++b) {
+        // Process one query point at a time
+        float* dist = (float*)malloc(ref_size * sizeof(float));
+        int* index = (int*)malloc(ref_size * sizeof(int));
+
+        const Dtype* cur_ref = ref + b * channels_;
+        const Dtype* cur_query = query + b * channels_;
+        for (int i = 0; i < query_size; ++i) {
+
+            // Compute all distances / indexes
+            for (int j = 0; j < ref_size; ++j) {
+                dist[j] = compute_distance(cur_ref, cur_query, j, i);
+                index[j] = j;
+            }
+
+            // Sort distances / indexes
+            modified_insertion_sort(dist, index);
+
+            // Copy k smallest distances and their associated index
+            int start = ignore_self_ ? 1 : 0;
+            for (int j = start; j < k_ + start; ++j) {
+                k_index[(b * k_ + j) * ref_size + i] = index[j];
+            }
         }
     }
 }
@@ -62,26 +85,20 @@ void SinLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype> *> &top,
  * Computes the Euclidean distance between a reference point and a query point.
  *
  * @param ref          refence points
- * @param ref_nb       number of reference points
  * @param query        query points
- * @param query_nb     number of query points
- * @param dim          dimension of points
  * @param ref_index    index to the reference point to consider
  * @param query_index  index to the query point to consider
  * @return computed distance
  */
-float compute_distance(const float *ref,
-                       int ref_nb,
-                       const float *query,
-                       int query_nb,
-                       int dim,
-                       int ref_index,
-                       int query_index)
+template <typename Dtype>
+float KnnLayer<Dtype>::compute_distance(const Blob<Dtype>* ref,
+    const Blob<Dtype>* query,
+    int ref_index,
+    int query_index)
 {
     float sum = 0.f;
-    for (int d = 0; d < dim; ++d)
-    {
-        const float diff = ref[d * ref_nb + ref_index] - query[d * query_nb + query_index];
+    for (int d = 0; d < channels_; ++d) {
+        const float diff = ref[d * ref_size_ + j] - query[d * query_size_ + i];
         sum += diff * diff;
     }
     return sqrtf(sum);
@@ -100,32 +117,30 @@ float compute_distance(const float *ref,
  * @param dist    array containing the `length` distances
  * @param index   array containing the index of the k smallest distances
  * @param length  total number of distances
- * @param k       number of smallest distances to locate
  */
-void modified_insertion_sort(float *dist, int *index, int length, int k)
+template <typename Dtype>
+void KnnLayer<Dtype>::modified_insertion_sort(float* dist, int* index)
 {
 
     // Initialise the first index
     index[0] = 0;
 
     // Go through all points
-    for (int i = 1; i < length; ++i)
-    {
+    for (int i = 1; i < length; ++i) {
 
         // Store current distance and associated index
         float curr_dist = dist[i];
         int curr_index = i;
-
+        int extra = ignore_self_ ? 0 : 1;
         // Skip the current value if its index is >= k and if it's higher the k-th slready sorted mallest value
-        if (i >= k && curr_dist >= dist[k - 1])
-        {
+        if (i >= k_ + (1 - extra) && curr_dist >= dist[k_ - extra]) {
             continue;
         }
 
         // Shift values (and indexes) higher that the current distance to the right
-        int j = std::min(i, k - 1);
-        while (j > 0 && dist[j - 1] > curr_dist)
-        {
+
+        int j = std::min(i, k_ - extra);
+        while (j > 0 && dist[j - 1] > curr_dist) {
             dist[j] = dist[j - 1];
             index[j] = index[j - 1];
             --j;

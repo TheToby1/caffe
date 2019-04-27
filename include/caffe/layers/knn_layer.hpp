@@ -7,36 +7,41 @@
 #include "caffe/layer.hpp"
 #include "caffe/proto/caffe.pb.h"
 
-#include "caffe/layers/neuron_layer.hpp"
+#include "caffe/layer.hpp"
 
-namespace caffe
-{
+namespace caffe {
 
 template <typename Dtype>
-class KnnLayer : public NeuronLayer<Dtype>
-{
-  public:
-    explicit KnnLayer(const LayerParameter &param)
-        : NeuronLayer<Dtype>(param) {}
+class KnnLayer : public Layer<Dtype> {
+public:
+    explicit KnnLayer(const LayerParameter& param)
+        : Layer<Dtype>(param)
+    {
+    }
+    virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
+        const vector<Blob<Dtype>*>& top);
+    virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
+        const vector<Blob<Dtype>*>& top);
 
-    virtual inline const char *type() const { return "Knn"; }
+    virtual inline const char* type() const { return "Knn"; }
 
-  protected:
-    virtual void Forward_cpu(const vector<Blob<Dtype> *> &bottom,
-                             const vector<Blob<Dtype> *> &top);
-    virtual void Forward_gpu(const vector<Blob<Dtype> *> &bottom,
-                             const vector<Blob<Dtype> *> &top);
+protected:
+    virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+        const vector<Blob<Dtype>*>& top);
+    virtual void Forward_gpu(const vector<Blob<Dtype>*>& bottom,
+        const vector<Blob<Dtype>*>& top);
 
-    virtual void Backward_cpu(const vector<Blob<Dtype> *> &top,
-                              const vector<bool> &propagate_down, const vector<Blob<Dtype> *> &bottom);
-    virtual void Backward_gpu(const vector<Blob<Dtype> *> &top,
-                              const vector<bool> &propagate_down, const vector<Blob<Dtype> *> &bottom);
+    virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
+        const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom) {}
+    virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
+        const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom) {}
 
-    float compute_distance(const Blob<Dtype> *ref, const Blob<Dtype> *query, int ref_index, int query_index);
-    void modified_insertion_sort(const Blob<Dtype> *dist, int *index);
+    float compute_distance(const Blob<Dtype>* ref, const Blob<Dtype>* query, int ref_index, int query_index);
+    void modified_insertion_sort(float* dist, int* index);
 
     int axis_, channels_;
     int k_;
+    bool ignore_self_;
     int ref_size_, query_size_;
 };
 
