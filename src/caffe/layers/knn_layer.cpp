@@ -55,10 +55,9 @@ void KnnLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
         Dtype* dist = (Dtype*)malloc(ref_size_ * sizeof(Dtype));
         int* index = (int*)malloc(ref_size_ * sizeof(int));
 
-        const Dtype* cur_ref = ref + b * channels_;
-        const Dtype* cur_query = query + b * channels_;
+        const Dtype* cur_ref = ref + b * (channels_ + ref_size_);
+        const Dtype* cur_query = query + b * (channels_ + query_size_;
         for (int i = 0; i < query_size_; ++i) {
-
             // Compute all distances / indexes
             for (int j = 0; j < ref_size_; ++j) {
                 dist[j] = compute_distance(cur_ref, cur_query, j, i);
@@ -71,7 +70,7 @@ void KnnLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
             // Copy k smallest distances and their associated index
             int start = ignore_self_ ? 1 : 0;
             for (int j = start; j < k_ + start; ++j) {
-                k_index[(b * k_ + j - start) * ref_size_ + i] = index[j - start];
+                k_index[((b * k_ + (j - start)) * ref_size_ + i] = index[j - start];
             }
         }
     }
