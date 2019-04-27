@@ -36,8 +36,8 @@ protected:
     virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
         const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom) {}
 
-    float compute_distance(const Blob<Dtype>* ref, const Blob<Dtype>* query, int ref_index, int query_index);
-    void modified_insertion_sort(float* dist, int* index);
+    float compute_distance(const Dtype* ref, const Dtype* query, int ref_index, int query_index);
+    void modified_insertion_sort(Dtype* dist, int* index);
 
     int axis_, channels_;
     int k_;
