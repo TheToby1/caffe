@@ -30,11 +30,11 @@ template <typename Dtype>
 void KnnLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
     const vector<Blob<Dtype>*>& top)
 {
-    vector<int> top_shape();
+    vector<int> top_shape;
 
-    top_shape.push_back(bottom[1].shape(0));
+    top_shape.push_back(bottom[1]->shape(0));
     top_shape.push_back(k_);
-    top_shape.push_back(bottom[1].shape(axis_));
+    top_shape.push_back(bottom[1]->shape(axis_));
     top_shape.push_back(1);
 
     top[0]->Reshape(top_shape);
@@ -44,22 +44,20 @@ template <typename Dtype>
 void KnnLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
     const vector<Blob<Dtype>*>& top)
 {
-    const KnnParameter& param = this->layer_param_.knn_param();
-
     const Dtype* ref = bottom[0]->cpu_data();
     const Dtype* query = bottom[1]->cpu_data();
     Dtype* k_index = top[0]->mutable_cpu_data();
 
-    int batch_size = bottom[0].shape(0);
+    int batch_size = bottom[0]->shape(0);
 
     for (int b = 0; b < batch_size; ++b) {
         // Process one query point at a time
-        Dtype* dist = (float*)malloc(ref_size_ * sizeof(float));
+        Dtype* dist = (float*)malloc(ref_size_ * sizeof(Dtype));
         int* index = (int*)malloc(ref_size_ * sizeof(int));
 
         const Dtype* cur_ref = ref + b * channels_;
         const Dtype* cur_query = query + b * channels_;
-        for (int i = 0; i < query_size; ++i) {
+        for (int i = 0; i < query_size_; ++i) {
 
             // Compute all distances / indexes
             for (int j = 0; j < ref_size_; ++j) {
@@ -96,7 +94,7 @@ float KnnLayer<Dtype>::compute_distance(const Dtype* ref,
 {
     Dtype sum = 0.f;
     for (int d = 0; d < channels_; ++d) {
-        const Dtype diff = ref[d * ref_size_ + j] - query[d * query_size_ + i];
+        const Dtype diff = ref[d * ref_size_ + ref_index] - query[d * __ + query_index];
         sum += diff * diff;
     }
     return sqrtf(sum);
@@ -124,7 +122,7 @@ void KnnLayer<Dtype>::modified_insertion_sort(Dtype* dist, int* index)
     index[0] = 0;
 
     // Go through all points
-    for (int i = 1; i < length; ++i) {
+    for (int i = 1; i < ref_size_; ++i) {
 
         // Store current distance and associated index
         Dtype curr_dist = dist[i];
