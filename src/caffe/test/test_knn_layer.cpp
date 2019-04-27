@@ -37,6 +37,8 @@ protected:
     Blob<Dtype>* const blob_bottom_;
     Blob<Dtype>* const blob_bottom_2_;
     Blob<Dtype>* const blob_top_;
+    vector<Blob<Dtype>*> blob_bottom_vec_;
+    vector<Blob<Dtype>*> blob_top_vec_;
 };
 TYPED_TEST_CASE(KnnLayerTest, TestDtypesAndDevices);
 
@@ -88,7 +90,7 @@ TYPED_TEST(KnnLayerTest, TestForward)
     layer->SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
     layer->Forward(this->blob_bottom_vec_, this->blob_top_vec_);
     // Now, check values
-    const int[] ans = { 0, 1, 2, 1, 0, 2, 2, 1, 3, 3, 2, 1, 0, 1, 2, 1, 0, 2, 2, 1, 3, 3, 2, 1 };
+    const int ans[] = { 0, 1, 2, 1, 0, 2, 2, 1, 3, 3, 2, 1, 0, 1, 2, 1, 0, 2, 2, 1, 3, 3, 2, 1 };
     const Dtype* top_data = this->blob_top_->cpu_data();
     EXPECT_EQ(top_data, ans);
     // for (int i = 0; i < this->blob_top_->count(); ++i) {
