@@ -93,7 +93,7 @@ TYPED_TEST(KnnLayerTest, TestForward)
     layer->SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
     layer->Forward(this->blob_bottom_vec_, this->blob_top_vec_);
     // Now, check values
-    const int ans[] = { 0, 1, 2, 1, 0, 2, 2, 1, 3, 3, 2, 1, 0, 1, 2, 1, 0, 2, 2, 1, 3, 3, 2, 1 };
+    const int ans[] = { 0, 1, 2, 3, 1, 0, 1, 2, 2, 2, 3, 1, 0, 1, 2, 3, 1, 0, 1, 2, 2, 2, 3, 1 };
     const Dtype* top_idx = this->blob_top_->cpu_data();
     const Dtype* top_dist = this->blob_top_2_->cpu_data();
     for (int i = 0; i < this->blob_top_->count(); ++i) {
