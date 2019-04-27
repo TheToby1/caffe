@@ -71,7 +71,7 @@ void KnnLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
             // Copy k smallest distances and their associated index
             int start = ignore_self_ ? 1 : 0;
             for (int j = start; j < k_ + start; ++j) {
-                k_index[(b * k_ + j) * ref_size_ + i] = index[j];
+                k_index[(b * k_ + j - start) * ref_size_ + i] = index[j - start];
             }
         }
     }
