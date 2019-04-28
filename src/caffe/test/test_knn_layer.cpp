@@ -56,8 +56,7 @@ TYPED_TEST(KnnLayerTest, TestSetup)
     filler.Fill(this->blob_bottom_);
     filler.Fill(this->blob_bottom_2_);
 
-    shared_ptr<Layer<Dtype>> layer(
-        new KnnLayer<Dtype>(layer_param));
+    shared_ptr<Layer<Dtype>> layer(new KnnLayer<Dtype>(layer_param));
 
     layer->SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
 
@@ -74,7 +73,6 @@ TYPED_TEST(KnnLayerTest, TestForward)
     int k = 3;
     KnnParameter* knn_param = layer_param.mutable_knn_param();
     knn_param->set_k(k);
-    knn_param->set_ignore_self(false);
 
     Dtype* ref = this->blob_bottom_->mutable_cpu_data();
     Dtype* query = this->blob_bottom_2_->mutable_cpu_data();
@@ -84,13 +82,13 @@ TYPED_TEST(KnnLayerTest, TestForward)
         query[i] = i;
     }
 
-    shared_ptr<Layer<Dtype>> layer(
-        new KnnLayer<Dtype>(layer_param));
+    shared_ptr<Layer<Dtype>> layer(new KnnLayer<Dtype>(layer_param));
 
     layer->SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
     layer->Forward(this->blob_bottom_vec_, this->blob_top_vec_);
     // Now, check values
-    const int ans[] = { 0, 1, 2, 3, 1, 0, 1, 2, 2, 2, 3, 1, 0, 1, 2, 3, 1, 0, 1, 2, 2, 2, 3, 1 };
+    const int ans[] = { 0, 1, 2, 3, 1, 0, 1, 2, 2, 2, 3, 1,
+        0, 1, 2, 3, 1, 0, 1, 2, 2, 2, 3, 1 };
     const Dtype* top_idx = this->blob_top_->cpu_data();
     for (int i = 0; i < this->blob_top_->count(); ++i) {
         EXPECT_EQ(static_cast<int>(top_idx[i]), ans[i]);
