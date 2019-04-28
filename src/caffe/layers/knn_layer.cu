@@ -29,7 +29,7 @@ namespace caffe
 */
 template <typename Dtype>
 __global__ void modified_insertion_sort(Dtype *dist,
-                                        Dtype *index, const int width)
+                                        Dtype *index, const int k, const int width)
 {
 
     // Column position
@@ -111,7 +111,7 @@ void KnnLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype> *> &bottom,
             count, ref_data, query_data, ref_size_, query_size_, channels_, dist_mtx);
 
     modified_insertion_sort<Dtype> // NOLINT_NEXT_LINE(whitespace/operators)
-        <<<CAFFE_GET_BLOCKS(query_size_), CAFFE_CUDA_NUM_THREADS>>>(dist_mtx, k_index, ref_size_);
+        <<<CAFFE_GET_BLOCKS(query_size_), CAFFE_CUDA_NUM_THREADS>>>(dist_mtx, k_index, k_, ref_size_);
 
     CUDA_POST_KERNEL_CHECK;
 }
