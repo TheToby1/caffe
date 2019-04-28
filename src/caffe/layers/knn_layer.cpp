@@ -21,7 +21,7 @@ namespace caffe {
  * @return computed distance
  */
 template <typename Dtype>
-float compute_distance(const Dtype* ref,
+Dtype compute_distance(const Dtype* ref,
     const Dtype* query,
     int ref_index,
     int query_index,
