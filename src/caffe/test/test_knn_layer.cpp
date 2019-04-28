@@ -22,21 +22,25 @@ protected:
         : blob_bottom_(new Blob<Dtype>(2, 3, 4, 1))
         , blob_bottom_2_(new Blob<Dtype>(2, 3, 4, 1))
         , blob_top_(new Blob<Dtype>())
+        , blob_top_2_(new Blob<Dtype>())
     {
         Caffe::set_random_seed(1701);
         blob_bottom_vec_.push_back(blob_bottom_);
         blob_bottom_vec_.push_back(blob_bottom_2_);
         blob_top_vec_.push_back(blob_top_);
+        blob_top_vec_.push_back(blob_top_2_);
     }
     virtual ~KnnLayerTest()
     {
         delete blob_bottom_;
         delete blob_bottom_2_;
         delete blob_top_;
+        delete blob_top_2_;
     }
     Blob<Dtype>* const blob_bottom_;
     Blob<Dtype>* const blob_bottom_2_;
     Blob<Dtype>* const blob_top_;
+    Blob<Dtype>* const blob_top_2_;
     vector<bool> propagate_down_;
     vector<Blob<Dtype>*> blob_bottom_vec_;
     vector<Blob<Dtype>*> blob_top_vec_;
