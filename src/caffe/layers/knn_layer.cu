@@ -102,7 +102,7 @@ void KnnLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype> *> &bottom,
     const Dtype *ref_data = bottom[0]->gpu_data();
     const Dtype *query_data = bottom[1]->gpu_data();
     Dtype *k_index = top[0]->mutable_gpu_data();
-    Dtype *dist_mtx = this->blobs_[0].mutable_gpu_data();
+    Dtype *dist_mtx = this->blobs_[0]->mutable_gpu_data();
     CHECK_EQ(this->blobs_[0]->offset(1), top[0]->offset(1)) << "Offsets of memory in blobs must be the same";
     const int count = top[0]->count();
 
