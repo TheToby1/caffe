@@ -74,10 +74,10 @@ __global__ void compute_distances(const int n, const Dtype* ref,
     CUDA_KERNEL_LOOP(index, n)
     {
         const int b = index / (query_dim * ref_dim);
-        const int ref_index = (index % ref_dim) * inner_dim + (b * (ref_dim * inner_dim));
-        const int query_index = ((index / ref_dim) % query_dim) * inner_dim + (b * (query_dim * inner_dim));
+        const int ref_index = index % ref_dim;
+        const int query_index = (index / ref_dim) % n;
         for (int i = 0; i < inner_dim; ++i) {
-            out[index] += ref[i * ref_dim + ref_index] - query[i * query_dim + query_index];
+            out[index] += ref[(b + i) * ref_dim + ref_index] - query[(b + i) * query_dim + query_index];
         }
         out[index] = sqrt(out[index] * out[index]);
     }
