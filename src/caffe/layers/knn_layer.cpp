@@ -149,7 +149,7 @@ void KnnLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype> *> &bottom,
             }
 
             // Sort distances / indexes
-            modified_insertion_sort(dist, k_index + b * k_, ref_size, k_);
+            modified_insertion_sort(dist, k_index + b * k_, ref_size_, k_);
         }
     }
 }
