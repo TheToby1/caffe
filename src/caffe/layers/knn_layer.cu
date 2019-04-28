@@ -62,7 +62,7 @@ __global__ void modified_insertion_sort(int n, Dtype* dist, Dtype* index, Dtype*
 
             // Write the current distance and index at their position
             p_dist[j] = curr_dist;
-            p_d_out = curr_dist;
+            p_d_out[j] = curr_dist;
             p_index[j] = curr_index;
         }
     }
