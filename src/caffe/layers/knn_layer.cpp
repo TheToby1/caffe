@@ -129,7 +129,7 @@ void KnnLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype> *> &bottom,
     const Dtype *ref = bottom[0]->cpu_data();
     const Dtype *query = bottom[1]->cpu_data();
     Dtype *k_index = top[0]->mutable_cpu_data();
-    Dtype *dist_mtx = this->blobs_[0].mutable_cpu_data();
+    Dtype *dist_mtx = this->blobs_[0]->mutable_cpu_data();
 
     int batch_size = bottom[0]->shape(0);
 
