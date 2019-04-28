@@ -61,9 +61,9 @@ TYPED_TEST(KnnLayerTest, TestSetup)
     layer->SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
 
     EXPECT_EQ(this->blob_top_->shape(0), 2);
-    EXPECT_EQ(this->blob_top_->shape(1), k);
+    EXPECT_EQ(this->blob_top_->shape(1), 1);
     EXPECT_EQ(this->blob_top_->shape(2), this->blob_bottom_2_->shape(2));
-    EXPECT_EQ(this->blob_top_->shape(3), 1);
+    EXPECT_EQ(this->blob_top_->shape(3), k);
 }
 
 TYPED_TEST(KnnLayerTest, TestForward)
@@ -87,8 +87,8 @@ TYPED_TEST(KnnLayerTest, TestForward)
     layer->SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
     layer->Forward(this->blob_bottom_vec_, this->blob_top_vec_);
     // Now, check values
-    const int ans[] = { 0, 1, 2, 3, 1, 0, 1, 2, 2, 2, 3, 1,
-        0, 1, 2, 3, 1, 0, 1, 2, 2, 2, 3, 1 };
+    const int ans[] = { 0, 1, 2, 1, 0, 2, 2, 1, 3, 3, 2, 1,
+        0, 1, 2, 1, 0, 2, 2, 1, 3, 3, 2, 1 };
     const Dtype* top_idx = this->blob_top_->cpu_data();
     for (int i = 0; i < this->blob_top_->count(); ++i) {
         EXPECT_EQ(static_cast<int>(top_idx[i]), ans[i]);

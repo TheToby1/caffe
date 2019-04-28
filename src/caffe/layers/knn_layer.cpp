@@ -110,7 +110,6 @@ void KnnLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
     top[0]->Reshape(top_shape);
 
     channels_ = bottom[0]->shape(1);
-
     ref_size_ = bottom[0]->shape(axis_);
     query_size_ = bottom[1]->shape(axis_);
 
