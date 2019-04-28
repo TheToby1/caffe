@@ -34,7 +34,7 @@ __global__ void modified_insertion_sort(int n, Dtype* dist, Dtype* index, Dtype*
         // Pointer shift
         Dtype* p_dist = dist + yIndex * width;
         Dtype* p_index = index + yIndex * k;
-        Dtype* p_d_out = index + yIndex * k;
+        Dtype* p_d_out = dist_out + yIndex * k;
 
         // Initialise the first index
         p_index[0] = 0;
