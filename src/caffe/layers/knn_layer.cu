@@ -32,10 +32,9 @@ __global__ void modified_insertion_sort(int n, Dtype* dist, Dtype* index,
     // Row position
     CUDA_KERNEL_LOOP(yIndex, n)
     {
-        const int b = yIndex % height;
         // Pointer shift
-        Dtype* p_dist = dist + b * yIndex * width;
-        Dtype* p_index = index + b * yIndex * k;
+        Dtype* p_dist = dist + yIndex * width;
+        Dtype* p_index = index + yIndex * k;
 
         // Initialise the first index
         p_index[0] = 0;
