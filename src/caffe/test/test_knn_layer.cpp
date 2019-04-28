@@ -37,6 +37,7 @@ protected:
     Blob<Dtype>* const blob_bottom_;
     Blob<Dtype>* const blob_bottom_2_;
     Blob<Dtype>* const blob_top_;
+    vector<bool>* const propagate_down_;
     vector<Blob<Dtype>*> blob_bottom_vec_;
     vector<Blob<Dtype>*> blob_top_vec_;
 };
@@ -93,6 +94,31 @@ TYPED_TEST(KnnLayerTest, TestForward)
     for (int i = 0; i < this->blob_top_->count(); ++i) {
         EXPECT_EQ(static_cast<int>(top_idx[i]), ans[i]);
     }
+}
+
+TYPED_TEST(KnnLayerTest, TestBackward)
+{
+    typedef typename TypeParam::Dtype Dtype;
+    LayerParameter layer_param;
+    int k = 3;
+    KnnParameter* knn_param = layer_param.mutable_knn_param();
+    knn_param->set_k(k);
+
+    Dtype* ref = this->blob_bottom_->mutable_cpu_data();
+    Dtype* query = this->blob_bottom_2_->mutable_cpu_data();
+    this->propagate_down_.push_back(true);
+    this->propagate_down_.push_back(true);
+
+    for (int i = 0; i < this->blob_bottom_->count(); ++i) {
+        ref[i] = i;
+        query[i] = i;
+    }
+
+    shared_ptr<Layer<Dtype>> layer(new KnnLayer<Dtype>(layer_param));
+
+    layer->SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
+    layer->Forward(this->blob_bottom_vec_, this->blob_top_vec_);
+    layer->Backward(this->blob_bottom_vec_, this->propagate_down_, this->blob_top_vec_);
 }
 
 } // namespace caffe
