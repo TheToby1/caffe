@@ -175,7 +175,7 @@ void KnnLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& bottom, const vec
         compute_query_diff<Dtype> // NOLINT_NEXT_LINE(whitespace/operators)
             <<<CAFFE_GET_BLOCKS(count), CAFFE_CUDA_NUM_THREADS>>>(
                 count, ref_data, query_data, k_index, ref_size_,
-                query_size_, channels_, query_diff);
+                query_size_, channels_, k_, query_diff);
     }
 
     CUDA_POST_KERNEL_CHECK;
