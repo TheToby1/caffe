@@ -161,7 +161,7 @@ void KnnLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& bottom, const vec
 
     if (propagate_down[0]) {
         Dtype* ref_diff = bottom[0]->mutable_gpu_diff();
-        caffe_gpu_set(bottom[0]->count(), 0, ref_diff);
+        caffe_gpu_set(bottom[0]->count(), 0., ref_diff);
         compute_ref_diff<Dtype> // NOLINT_NEXT_LINE(whitespace/operators)
             <<<CAFFE_GET_BLOCKS(count), CAFFE_CUDA_NUM_THREADS>>>(
                 count, ref_data, query_data, ref_size_,
@@ -169,7 +169,7 @@ void KnnLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& bottom, const vec
     }
     if (propagate_down[1]) {
         Dtype* query_diff = bottom[1]->mutable_gpu_diff();
-        caffe_gpu_set(bottom[1]->count(), 0, query_diff);
+        caffe_gpu_set(bottom[1]->count(), 0., query_diff);
         compute_query_diff<Dtype> // NOLINT_NEXT_LINE(whitespace/operators)
             <<<CAFFE_GET_BLOCKS(count), CAFFE_CUDA_NUM_THREADS>>>(
                 count, ref_data, query_data, ref_size_,
