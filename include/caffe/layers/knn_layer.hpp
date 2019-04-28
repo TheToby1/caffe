@@ -9,34 +9,32 @@
 
 #include "caffe/layer.hpp"
 
-namespace caffe
-{
+namespace caffe {
 
 template <typename Dtype>
-class KnnLayer : public Layer<Dtype>
-{
-  public:
-    explicit KnnLayer(const LayerParameter &param)
+class KnnLayer : public Layer<Dtype> {
+public:
+    explicit KnnLayer(const LayerParameter& param)
         : Layer<Dtype>(param)
     {
     }
-    virtual void LayerSetUp(const vector<Blob<Dtype> *> &bottom,
-                            const vector<Blob<Dtype> *> &top);
-    virtual void Reshape(const vector<Blob<Dtype> *> &bottom,
-                         const vector<Blob<Dtype> *> &top);
+    virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
+        const vector<Blob<Dtype>*>& top);
+    virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
+        const vector<Blob<Dtype>*>& top);
 
-    virtual inline const char *type() const { return "Knn"; }
+    virtual inline const char* type() const { return "Knn"; }
 
-  protected:
-    virtual void Forward_cpu(const vector<Blob<Dtype> *> &bottom,
-                             const vector<Blob<Dtype> *> &top);
-    virtual void Forward_gpu(const vector<Blob<Dtype> *> &bottom,
-                             const vector<Blob<Dtype> *> &top);
+protected:
+    virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+        const vector<Blob<Dtype>*>& top);
+    virtual void Forward_gpu(const vector<Blob<Dtype>*>& bottom,
+        const vector<Blob<Dtype>*>& top);
 
-    virtual void Backward_cpu(const vector<Blob<Dtype> *> &top,
-                              const vector<bool> &propagate_down, const vector<Blob<Dtype> *> &bottom) {}
-    virtual void Backward_gpu(const vector<Blob<Dtype> *> &top,
-                              const vector<bool> &propagate_down, const vector<Blob<Dtype> *> &bottom) {}
+    virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
+        const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
+    virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
+        const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
 
     int axis_, channels_;
     int k_;

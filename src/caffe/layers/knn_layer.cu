@@ -81,7 +81,45 @@ __global__ void compute_distances(const int n, const Dtype* ref,
             out[index] += ref[(b * inner_dim + i) * ref_dim + ref_index]
                 - query[(b * inner_dim + i) * query_dim + query_index];
         }
-        out[index] = sqrt(out[index] * out[index]);
+        out[index] = out[index] * out[index];
+    }
+
+} // namespace caffe
+
+template <typename Dtype>
+__global__ void compute_ref_diff(const int n, const Dtype* ref,
+    const Dtype* query, const Dtype* k_index, const int ref_dim,
+    const int query_dim, const int inner_dim, const int k,
+    Dtype* out)
+{
+    CUDA_KERNEL_LOOP(index, n)
+    {
+        const int b = index / (query_dim * k);
+        const int ref_row = k_index[index];
+        const int query_index = (index / k) - (b * query_dim);
+        for (int i = 0; i < inner_dim; ++i) {
+            const int ref_index = (b * inner_dim + i) * ref_dim + ref_row;
+            out[ref_index] = query[(b * inner_dim + i) * query_dim + query_index] - ref[ref_index];
+        }
+    }
+
+} // namespace caffe
+
+template <typename Dtype>
+__global__ void compute_query_diff(const int n, const Dtype* ref,
+    const Dtype* query, const Dtype* k_index, const int ref_dim,
+    const int query_dim, const int inner_dim, const int k,
+    Dtype* out)
+{
+    CUDA_KERNEL_LOOP(index, n)
+    {
+        const int b = index / (query_dim * k);
+        const int ref_index = k_index[index];
+        const int query_row = (index / k) - (b * query_dim);
+        for (int i = 0; i < inner_dim; ++i) {
+            query_index = (b * inner_dim + i) * query_dim + query_row;
+            out[query_index] = query[query_index] - ref[(b * inner_dim + i) * ref_dim + ref_index];
+        }
     }
 
 } // namespace caffe
@@ -106,6 +144,37 @@ void KnnLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
     modified_insertion_sort<Dtype> // NOLINT_NEXT_LINE(whitespace/operators)
         <<<CAFFE_GET_BLOCKS(query_size_), CAFFE_CUDA_NUM_THREADS>>>(
             top[0]->shape(0) * query_size_, dist_mtx, k_index, ref_size_, k_);
+
+    CUDA_POST_KERNEL_CHECK;
+}
+
+template <typename Dtype>
+void KnnLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& bottom, const vector<bool>& propagate_down,
+    const vector<Blob<Dtype>*>& top)
+{
+    const Dtype* ref_data = bottom[0]->gpu_data();
+    const Dtype* query_data = bottom[1]->gpu_data();
+    const Dtype* k_index = top[0]->gpu_data();
+    // CHECK_EQ(this->blobs_[0]->offset(1), top[0]->offset(1)) << "Offsets of
+    // memory in blobs must be the same";
+    const int count = this->blobs_[0]->count();
+
+    if (propogate_down[0]) {
+        Dtype* ref_diff = bottom[0]->mutable_gpu_diff();
+        caffe_gpu_set(bottom[0]->count(), 0, ref_diff);
+        compute_ref_diff<Dtype> // NOLINT_NEXT_LINE(whitespace/operators)
+            <<<CAFFE_GET_BLOCKS(count), CAFFE_CUDA_NUM_THREADS>>>(
+                count, ref_data, query_data, ref_size_,
+                query_size_, channels_, k_, ref_diff);
+    }
+    if (propogate_down[1]) {
+        Dtype* query_diff = bottom[1]->mutable_gpu_diff();
+        caffe_gpu_set(bottom[1]->count(), 0, query_diff);
+        compute_query_diff<Dtype> // NOLINT_NEXT_LINE(whitespace/operators)
+            <<<CAFFE_GET_BLOCKS(count), CAFFE_CUDA_NUM_THREADS>>>(
+                count, ref_data, query_data, ref_size_,
+                query_size_, channels_, query_diff);
+    }
 
     CUDA_POST_KERNEL_CHECK;
 }

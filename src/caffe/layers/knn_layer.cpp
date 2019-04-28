@@ -34,7 +34,7 @@ float compute_distance(const Dtype* ref,
         const Dtype diff = ref[d * ref_size + ref_index] - query[d * query_size + query_index];
         sum += diff * diff;
     }
-    return sqrtf(sum);
+    return sum;
 }
 
 /**
@@ -141,6 +141,52 @@ void KnnLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
 
             // Sort distances / indexes
             modified_insertion_sort(dist, k_index + ((b * query_size_) + i) * k_, ref_size_, k_);
+        }
+    }
+}
+
+template <typename Dtype>
+void KnnLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& bottom, const vector<bool>& propagate_down,
+    const vector<Blob<Dtype>*>& top)
+{
+    const Dtype* ref = bottom[0]->cpu_data();
+    const Dtype* query = bottom[1]->cpu_data();
+    const Dtype* k_index = top[0]->mutable_cpu_data();
+
+    int batch_size = bottom[0]->shape(0);
+
+    if (propogate_down[0]) {
+        Dtype* bottom_diff_0 = bottom[0]->mutable_gpu_diff();
+
+        memset(bottom_diff_0, 0, sizeof(Dtype) * bottom[0]->count());
+        for (int b = 0; b < batch_size; ++b) {
+            for (int i = 0; i < query_size_; ++i) {
+                for (int j = 0; j < k_, ++j) {
+                    const int ref_row = k_index[(b * k_ + j) * query_size_ + i];
+                    for (int c = 0; c < channels_; ++c) {
+                        const int part_ind = (b * channel_ + c);
+                        const int ref_ind = part_ind * ref_size_ + ref_row;
+                        bottom_diff_0[ref_ind] += 2 * (query[part_ind * query_size_ + i] - ref[ref_ind]);
+                    }
+                }
+            }
+        }
+    }
+    if (propogate_down[1]) {
+        Dtype* bottom_diff_1 = bottom[1]->mutable_gpu_diff();
+
+        memset(bottom_diff_1, 0, sizeof(Dtype) * bottom[1]->count());
+        for (int b = 0; b < batch_size; ++b) {
+            for (int i = 0; i < query_size_; ++i) {
+                for (int j = 0; j < k_, ++j) {
+                    const int ref_row = k_index[(b * k_ + j) * query_size_ + i];
+                    for (int c = 0; c < channels_; ++c) {
+                        const int part_ind = (b * channel_ + c);
+                        const int ref_ind = part_ind * ref_size_ + ref_row;
+                        bottom_diff_1[part_ind * query_size_ + i] += 2 * (query[part_ind * query_size_ + i] - ref[ref_ind]);
+                    }
+                }
+            }
         }
     }
 }
