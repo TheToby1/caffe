@@ -88,7 +88,7 @@ __global__ void compute_distances(const int n, const Dtype *ref,
         const int query_index = ((index / ref_dim) % query_dim) * inner_dim + (b * (query_dim * inner_dim));
         for (int i = 0; i < inner_dim; ++i)
         {
-            out[index] += ref[ref_index + i] - query[query_index + i];
+            out[index] += ref[i * ref_size + ref_index] - query[i * ref_size + query_index];
         }
         out[index] = sqrt(out[index] * out[index]);
     }
