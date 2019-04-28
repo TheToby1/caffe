@@ -117,7 +117,7 @@ __global__ void compute_query_diff(const int n, const Dtype* ref,
         const int ref_index = k_index[index];
         const int query_row = (index / k) - (b * query_dim);
         for (int i = 0; i < inner_dim; ++i) {
-            query_index = (b * inner_dim + i) * query_dim + query_row;
+            const int query_index = (b * inner_dim + i) * query_dim + query_row;
             out[query_index] = query[query_index] - ref[(b * inner_dim + i) * ref_dim + ref_index];
         }
     }
