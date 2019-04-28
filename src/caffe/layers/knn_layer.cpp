@@ -54,7 +54,7 @@ float compute_distance(const Dtype *ref,
  * @param length  total number of distances
  */
 template <typename Dtype>
-void modified_insertion_sort(Dtype *dist, int *index, int ref_size, int k)
+void modified_insertion_sort(Dtype *dist, Dtype *index, int ref_size, int k)
 {
 
     // Initialise the first index
