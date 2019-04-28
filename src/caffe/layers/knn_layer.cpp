@@ -119,7 +119,7 @@ void KnnLayer<Dtype>::Reshape(const vector<Blob<Dtype> *> &bottom,
     ref_size_ = bottom[0]->shape(axis_);
     query_size_ = bottom[1]->shape(axis_);
 
-    this->blobs_[0].reset(new Blob<Dtype>(bottom[1]->shape(0), 1, bottom[1]->shape(axis_), bottom[0]->shape(axis_));
+    this->blobs_[0].reset(new Blob<Dtype>(bottom[1]->shape(0), 1, bottom[1]->shape(axis_), bottom[0]->shape(axis_)));
 }
 
 template <typename Dtype>
