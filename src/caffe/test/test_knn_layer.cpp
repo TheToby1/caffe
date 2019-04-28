@@ -107,8 +107,8 @@ TYPED_TEST(KnnLayerTest, TestBackward)
 
     Dtype* ref = this->blob_bottom_->mutable_cpu_data();
     Dtype* query = this->blob_bottom_2_->mutable_cpu_data();
-    this->propagate_down_->push_back(true);
-    this->propagate_down_->push_back(true);
+    this->propagate_down_.push_back(true);
+    this->propagate_down_.push_back(true);
 
     for (int i = 0; i < this->blob_bottom_->count(); ++i) {
         ref[i] = i;
