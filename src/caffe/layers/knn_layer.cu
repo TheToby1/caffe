@@ -94,7 +94,7 @@ void KnnLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
     Dtype* dist_mtx = this->blobs_[0]->mutable_gpu_data();
     // CHECK_EQ(this->blobs_[0]->offset(1), top[0]->offset(1)) << "Offsets of
     // memory in blobs must be the same";
-    const int count = top[0]->count();
+    const int count = this->blobs_[0]->count();
 
     compute_distances<Dtype> // NOLINT_NEXT_LINE(whitespace/operators)
         <<<CAFFE_GET_BLOCKS(count), CAFFE_CUDA_NUM_THREADS>>>(
