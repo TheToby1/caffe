@@ -151,12 +151,12 @@ void KnnLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& bottom, const vec
 {
     const Dtype* ref = bottom[0]->cpu_data();
     const Dtype* query = bottom[1]->cpu_data();
-    const Dtype* k_index = top[0]->mutable_cpu_data();
+    const Dtype* k_index = top[0]->cpu_data();
 
     int batch_size = bottom[0]->shape(0);
 
     if (propogate_down[0]) {
-        Dtype* bottom_diff_0 = bottom[0]->mutable_gpu_diff();
+        Dtype* bottom_diff_0 = bottom[0]->mutable_cpu_diff();
 
         memset(bottom_diff_0, 0, sizeof(Dtype) * bottom[0]->count());
         for (int b = 0; b < batch_size; ++b) {
@@ -173,7 +173,7 @@ void KnnLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& bottom, const vec
         }
     }
     if (propogate_down[1]) {
-        Dtype* bottom_diff_1 = bottom[1]->mutable_gpu_diff();
+        Dtype* bottom_diff_1 = bottom[1]->mutable_cpu_diff();
 
         memset(bottom_diff_1, 0, sizeof(Dtype) * bottom[1]->count());
         for (int b = 0; b < batch_size; ++b) {
