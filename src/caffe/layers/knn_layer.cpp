@@ -161,7 +161,7 @@ void KnnLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& bottom, const vec
         memset(bottom_diff_0, 0, sizeof(Dtype) * bottom[0]->count());
         for (int b = 0; b < batch_size; ++b) {
             for (int i = 0; i < query_size_; ++i) {
-                for (int j = 0; j < k_, ++j) {
+                for (int j = 0; j < k_; ++j) {
                     const int ref_row = k_index[(b * k_ + j) * query_size_ + i];
                     for (int c = 0; c < channels_; ++c) {
                         const int part_ind = (b * channel_ + c);
@@ -178,7 +178,7 @@ void KnnLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& bottom, const vec
         memset(bottom_diff_1, 0, sizeof(Dtype) * bottom[1]->count());
         for (int b = 0; b < batch_size; ++b) {
             for (int i = 0; i < query_size_; ++i) {
-                for (int j = 0; j < k_, ++j) {
+                for (int j = 0; j < k_; ++j) {
                     const int ref_row = k_index[(b * k_ + j) * query_size_ + i];
                     for (int c = 0; c < channels_; ++c) {
                         const int part_ind = (b * channel_ + c);
