@@ -45,7 +45,7 @@ __global__ void modified_insertion_sort(int n, Dtype* dist, Dtype* index, int wi
             Dtype curr_index = i;
 
             // Skip the current value if its index is >= k and if it's higher the k-th
-            // slready sorted mallest value
+            // already sorted smallest value
             if (i >= k && curr_dist >= p_dist[k - 1])
                 continue;
 
@@ -75,11 +75,11 @@ __global__ void compute_distances(const int n, const Dtype* ref,
     {
         const int b = index / (query_dim * ref_dim);
         const int ref_index = index % ref_dim;
-        const int query_index = (index / ref_dim) % (query_dim * ref_dim);
+        const int query_index = (index / ref_dim) - (b * query_dim);
         out[index] = 0;
         for (int i = 0; i < inner_dim; ++i) {
-            out[index] += ref[((b * inner_dim) + i) * ref_dim + ref_index]
-                - query[((b * inner_dim) + i) * query_dim + query_index];
+            out[index] += ref[(b * inner_dim + i) * ref_dim + ref_index]
+                - query[(b * inner_dim + i) * query_dim + query_index];
         }
         out[index] = sqrt(out[index] * out[index]);
     }
