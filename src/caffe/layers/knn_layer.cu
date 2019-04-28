@@ -75,7 +75,7 @@ __global__ void compute_distances(const int n, const Dtype* ref,
     {
         const int b = index / (query_dim * ref_dim);
         const int ref_index = index % ref_dim;
-        const int query_index = (index / ref_dim) % n;
+        const int query_index = (index / ref_dim) % (query_dim * ref_dim);
         for (int i = 0; i < inner_dim; ++i) {
             out[index] += ref[((b * inner_dim) + i) * ref_dim + ref_index] - query[((b * inner_dim) + i) * query_dim + query_index];
         }
@@ -98,8 +98,8 @@ void KnnLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
 
     compute_distances<Dtype> // NOLINT_NEXT_LINE(whitespace/operators)
         <<<CAFFE_GET_BLOCKS(count), CAFFE_CUDA_NUM_THREADS>>>(
-            count, ref_data, query_data, ref_size_, query_size_, channels_,
-            dist_mtx);
+            count, ref_data, query_data, ref_size_,
+            query_size_, channels_, dist_mtx);
 
     modified_insertion_sort<Dtype> // NOLINT_NEXT_LINE(whitespace/operators)
         <<<CAFFE_GET_BLOCKS(query_size_), CAFFE_CUDA_NUM_THREADS>>>(
