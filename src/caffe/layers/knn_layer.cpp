@@ -9,26 +9,24 @@
 
 #include "caffe/layers/knn_layer.hpp"
 
-namespace caffe {
+namespace caffe
+{
 
 template <typename Dtype>
-void KnnLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
-    const vector<Blob<Dtype>*>& top)
+void KnnLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype> *> &bottom,
+                                 const vector<Blob<Dtype> *> &top)
 {
-    const KnnParameter& param = this->layer_param_.knn_param();
+    const KnnParameter &param = this->layer_param_.knn_param();
 
-    ignore_self_ = param.ignore_self();
     k_ = param.k();
     axis_ = param.axis();
-    channels_ = bottom[0]->shape(1);
 
-    ref_size_ = bottom[0]->shape(axis_);
-    query_size_ = bottom[1]->shape(axis_);
+    this->blobs_.resize(1);
 }
 
 template <typename Dtype>
-void KnnLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
-    const vector<Blob<Dtype>*>& top)
+void KnnLayer<Dtype>::Reshape(const vector<Blob<Dtype> *> &bottom,
+                              const vector<Blob<Dtype> *> &top)
 {
     vector<int> top_shape;
 
@@ -38,40 +36,43 @@ void KnnLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
     top_shape.push_back(1);
 
     top[0]->Reshape(top_shape);
+
+    channels_ = bottom[0]->shape(1);
+
+    ref_size_ = bottom[0]->shape(axis_);
+    query_size_ = bottom[1]->shape(axis_);
+
+    this->blobs_[0].reset(new Blob<Dtype>(bottom[1]->shape[0], 1, bottom[0]->shape(axis_), bottom[1]->shape(axis_)));
 }
 
 template <typename Dtype>
-void KnnLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
-    const vector<Blob<Dtype>*>& top)
+void KnnLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype> *> &bottom,
+                                  const vector<Blob<Dtype> *> &top)
 {
-    const Dtype* ref = bottom[0]->cpu_data();
-    const Dtype* query = bottom[1]->cpu_data();
-    Dtype* k_index = top[0]->mutable_cpu_data();
+    const Dtype *ref = bottom[0]->cpu_data();
+    const Dtype *query = bottom[1]->cpu_data();
+    Dtype *k_index = top[0]->mutable_cpu_data();
+    Dtype *dist_mtx = this->blobs_[0].mutable_cpu_data();
 
     int batch_size = bottom[0]->shape(0);
 
-    for (int b = 0; b < batch_size; ++b) {
+    for (int b = 0; b < batch_size; ++b)
+    {
         // Process one query point at a time
-        Dtype* dist = (Dtype*)malloc(ref_size_ * sizeof(Dtype));
-        int* index = (int*)malloc(ref_size_ * sizeof(int));
+        Dtype *dist = dist_mtx + b * ref_size_;
 
-        const Dtype* cur_ref = ref + b * channels_ * ref_size_;
-        const Dtype* cur_query = query + b * channels_ * query_size_;
-        for (int i = 0; i < query_size_; ++i) {
+        const Dtype *cur_ref = ref + b * channels_ * ref_size_;
+        const Dtype *cur_query = query + b * channels_ * query_size_;
+        for (int i = 0; i < query_size_; ++i)
+        {
             // Compute all distances / indexes
-            for (int j = 0; j < ref_size_; ++j) {
+            for (int j = 0; j < ref_size_; ++j)
+            {
                 dist[j] = compute_distance(cur_ref, cur_query, j, i);
-                index[j] = j;
             }
 
             // Sort distances / indexes
-            modified_insertion_sort(dist, index);
-
-            // Copy k smallest distances and their associated index
-            int start = ignore_self_ ? 1 : 0;
-            for (int j = start; j < k_ + start; ++j) {
-                k_index[(b * k_ + (j - start)) * ref_size_ + i] = index[j];
-            }
+            modified_insertion_sort(dist, k_index + b * k_);
         }
     }
 }
@@ -86,13 +87,14 @@ void KnnLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
  * @return computed distance
  */
 template <typename Dtype>
-float KnnLayer<Dtype>::compute_distance(const Dtype* ref,
-    const Dtype* query,
-    int ref_index,
-    int query_index)
+float compute_distance(const Dtype *ref,
+                       const Dtype *query,
+                       int ref_index,
+                       int query_index)
 {
     Dtype sum = 0.f;
-    for (int d = 0; d < channels_; ++d) {
+    for (int d = 0; d < channels_; ++d)
+    {
         const Dtype diff = ref[d * ref_size_ + ref_index] - query[d * query_size_ + query_index];
         sum += diff * diff;
     }
@@ -114,28 +116,30 @@ float KnnLayer<Dtype>::compute_distance(const Dtype* ref,
  * @param length  total number of distances
  */
 template <typename Dtype>
-void KnnLayer<Dtype>::modified_insertion_sort(Dtype* dist, int* index)
+void modified_insertion_sort(Dtype *dist, int *index)
 {
 
     // Initialise the first index
     index[0] = 0;
 
     // Go through all points
-    for (int i = 1; i < ref_size_; ++i) {
+    for (int i = 1; i < ref_size_; ++i)
+    {
 
         // Store current distance and associated index
         Dtype curr_dist = dist[i];
         int curr_index = i;
-        int k = ignore_self_ ? k_ + 1 : k_;
         // Skip the current value if its index is > k and if it's higher the k-th already sorted smallest value
-        if (i >= k && curr_dist >= dist[k - 1]) {
+        if (i >= k_ && curr_dist >= dist[k_ - 1])
+        {
             continue;
         }
 
         // Shift values (and indexes) higher that the current distance to the right
 
-        int j = std::min(i, k - 1);
-        while (j > 0 && dist[j - 1] > curr_dist) {
+        int j = std::min(i, k_ - 1);
+        while (j > 0 && dist[j - 1] > curr_dist)
+        {
             dist[j] = dist[j - 1];
             index[j] = index[j - 1];
             --j;
