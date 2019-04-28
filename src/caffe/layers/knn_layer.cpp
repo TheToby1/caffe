@@ -141,7 +141,7 @@ void KnnLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype> *> &bottom,
         const Dtype *cur_query = query + b * channels_ * query_size_;
         for (int i = 0; i < query_size_; ++i)
         {
-            Dtype *dist = dist_mtx + b * ref_size_ * query_size_;
+            Dtype *dist = dist_mtx + b * ref_size_ * query_size_ + i;
             // Compute all distances / indexes
             for (int j = 0; j < ref_size_; ++j)
             {
