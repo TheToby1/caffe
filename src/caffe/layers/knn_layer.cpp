@@ -136,12 +136,12 @@ void KnnLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype> *> &bottom,
     for (int b = 0; b < batch_size; ++b)
     {
         // Process one query point at a time
-        Dtype *dist = dist_mtx + b * ref_size_;
 
         const Dtype *cur_ref = ref + b * channels_ * ref_size_;
         const Dtype *cur_query = query + b * channels_ * query_size_;
         for (int i = 0; i < query_size_; ++i)
         {
+            Dtype *dist = dist_mtx + b * ref_size_ * query_size_;
             // Compute all distances / indexes
             for (int j = 0; j < ref_size_; ++j)
             {
