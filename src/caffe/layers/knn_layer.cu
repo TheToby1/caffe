@@ -20,31 +20,29 @@ namespace caffe {
  * the first k values.
  *
  * @param dist         distance matrix
- * @param dist_pitch   pitch of the distance matrix given in number of columns
  * @param index        index matrix
- * @param index_pitch  pitch of the index matrix given in number of columns
  * @param width        width of the distance matrix and of the index matrix
  * @param height       height of the distance matrix
  * @param k            number of values to find
  */
 template <typename Dtype>
-__global__ void modified_insertion_sort(Dtype* dist, Dtype* index, const int k,
-    const int height, const int width)
+__global__ void modified_insertion_sort(Dtype* dist, Dtype* index, int k,
+    int height, int width)
 {
-    // Column position
-    unsigned int xIndex = blockIdx.x * blockDim.x + threadIdx.x;
+    // Row position
+    unsigned int yIndex = blockIdx.x * blockDim.x + threadIdx.x;
 
     // Do nothing if we are out of bounds
-    if (xIndex < width) {
+    if (yIndex < height) {
         // Pointer shift
-        Dtype* p_dist = dist + xIndex;
-        Dtype* p_index = index + xIndex;
+        Dtype* p_dist = dist + yIndex * width;
+        Dtype* p_index = index + yIndex * k;
 
         // Initialise the first index
         p_index[0] = 0;
 
         // Go through all points
-        for (int i = 1; i < height; ++i) {
+        for (int i = 1; i < width; ++i) {
             // Store current distance and associated index
             Dtype curr_dist = p_dist[i];
             Dtype curr_index = i;
@@ -109,7 +107,7 @@ void KnnLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
 
     modified_insertion_sort<Dtype> // NOLINT_NEXT_LINE(whitespace/operators)
         <<<CAFFE_GET_BLOCKS(query_size_), CAFFE_CUDA_NUM_THREADS>>>(
-            dist_mtx, k_index, k_, ref_size_, query_size_);
+            dist_mtx, k_index, k_, query_size_, ref_size_);
 
     CUDA_POST_KERNEL_CHECK;
 }
