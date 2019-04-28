@@ -26,8 +26,7 @@ namespace caffe {
  * @param k            number of values to find
  */
 template <typename Dtype>
-__global__ void modified_insertion_sort(int n, Dtype* dist, Dtype* index,
-    int height, int width, int k)
+__global__ void modified_insertion_sort(int n, Dtype* dist, Dtype* index, int width, int k)
 {
     // Row position
     CUDA_KERNEL_LOOP(yIndex, n)
@@ -47,16 +46,15 @@ __global__ void modified_insertion_sort(int n, Dtype* dist, Dtype* index,
 
             // Skip the current value if its index is >= k and if it's higher the k-th
             // slready sorted mallest value
-            if (i >= k && curr_dist >= p_dist[(k - 1)]) {
+            if (i >= k && curr_dist >= p_dist[k - 1])
                 continue;
-            }
 
             // Shift values (and indexes) higher that the current distance to the
             // right
             int j = min(i, k - 1);
-            while (j > 0 && p_dist[(j - 1)] > curr_dist) {
-                p_dist[j] = p_dist[(j - 1)];
-                p_index[j] = p_index[(j - 1)];
+            while (j > 0 && p_dist[j - 1] > curr_dist) {
+                p_dist[j] = p_dist[j - 1];
+                p_index[j] = p_index[j - 1];
                 --j;
             }
 
@@ -75,7 +73,7 @@ __global__ void compute_distances(const int n, const Dtype* ref,
 {
     CUDA_KERNEL_LOOP(index, n)
     {
-        const int b = index / ((query_dim * ref_dim) * inner_dim);
+        const int b = index / (query_dim * ref_dim);
         const int ref_index = (index % ref_dim) * inner_dim + (b * (ref_dim * inner_dim));
         const int query_index = ((index / ref_dim) % query_dim) * inner_dim + (b * (query_dim * inner_dim));
         for (int i = 0; i < inner_dim; ++i) {
@@ -105,7 +103,7 @@ void KnnLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
 
     modified_insertion_sort<Dtype> // NOLINT_NEXT_LINE(whitespace/operators)
         <<<CAFFE_GET_BLOCKS(query_size_), CAFFE_CUDA_NUM_THREADS>>>(
-            top[0]->shape(0) * top[0]->shape(2), dist_mtx, k_index, query_size_, ref_size_, k_);
+            top[0]->shape(0) * top[0]->shape(2), dist_mtx, k_index, ref_size_, k_);
 
     CUDA_POST_KERNEL_CHECK;
 }
