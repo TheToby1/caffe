@@ -1528,6 +1528,4 @@ message KnnParameter {
 
   // the number of nearest neighbours to find
   optional int32 k = 2 [default = 1];
-
-  optional bool ignore_self = 3 [default = false];
 }
