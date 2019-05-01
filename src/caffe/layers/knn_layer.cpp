@@ -10,33 +10,6 @@
 #include "caffe/layers/knn_layer.hpp"
 
 namespace caffe {
-
-/**
- * Computes the Euclidean distance between a reference point and a query point.
- *
- * @param ref          refence points
- * @param query        query points
- * @param ref_index    index to the reference point to consider
- * @param query_index  index to the query point to consider
- * @return computed distance
- */
-template <typename Dtype>
-Dtype compute_distance(const Dtype* ref,
-    const Dtype* query,
-    int ref_index,
-    int query_index,
-    int ref_size,
-    int query_size,
-    int channels)
-{
-    Dtype sum = 0.f;
-    for (int d = 0; d < channels; ++d) {
-        const Dtype diff = ref[d * ref_size + ref_index] - query[d * query_size + query_index];
-        sum += diff * diff;
-    }
-    return sum;
-}
-
 /**
  * Gathers at the beginning of the `dist` array the k smallest values and their
  * respective index (in the initial array) in the `index` array. After this call,
@@ -52,37 +25,35 @@ Dtype compute_distance(const Dtype* ref,
  * @param length  total number of distances
  */
 template <typename Dtype>
-void modified_insertion_sort(Dtype* dist, Dtype* index, Dtype* dist_out, int ref_size, int k)
+void modified_insertion_sort(Dtype* dist, Dtype* index, Dtype* dist_out, const int ref_size, const int k, const int dist_index, const int top_index)
 {
-
     // Initialise the first index
-    index[0] = 0;
+    index[top_index] = 0;
+    dist_out[top_index] = dist[dist_index];
 
     // Go through all points
     for (int i = 1; i < ref_size; ++i) {
-
         // Store current distance and associated index
-        Dtype curr_dist = dist[i];
+        Dtype curr_dist = dist[dist_index + i];
         int curr_index = i;
         // Skip the current value if its index is > k and if it's higher the k-th already sorted smallest value
-        if (i >= k && curr_dist >= dist[k - 1]) {
+        if (i >= k && curr_dist >= dist[dist_index + k - 1])
             continue;
-        }
 
         // Shift values (and indexes) higher that the current distance to the right
 
         int j = std::min(i, k - 1);
-        while (j > 0 && dist[j - 1] > curr_dist) {
-            dist[j] = dist[j - 1];
-            dist_out[j] = dist_out[j - 1];
-            index[j] = index[j - 1];
+        while (j > 0 && dist[dist_index + j - 1] > curr_dist) {
+            dist[dist_index + j] = dist[dist_index + j - 1];
+            dist_out[top_index + j] = dist[dist_index + j - 1];
+            index[top_index + j] = index[top_index + j - 1];
             --j;
         }
 
         // Write the current distance and index at their position
-        dist[j] = curr_dist;
-        dist_out[j] = curr_dist;
-        index[j] = curr_index;
+        dist[dist_index + j] = curr_dist;
+        dist_out[top_index + j] = curr_dist;
+        index[top_index + j] = curr_index;
     }
 }
 
@@ -102,21 +73,20 @@ template <typename Dtype>
 void KnnLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
     const vector<Blob<Dtype>*>& top)
 {
+    channels_ = bottom[0]->shape(1);
+    ref_size_ = bottom[0]->shape(axis_);
+    query_size_ = bottom[1]->shape(axis_);
     vector<int> top_shape;
 
     top_shape.push_back(bottom[1]->shape(0));
     top_shape.push_back(1);
-    top_shape.push_back(bottom[1]->shape(axis_));
+    top_shape.push_back(query_size_);
     top_shape.push_back(k_);
 
     top[0]->Reshape(top_shape);
     top[1]->Reshape(top_shape);
 
-    channels_ = bottom[0]->shape(1);
-    ref_size_ = bottom[0]->shape(axis_);
-    query_size_ = bottom[1]->shape(axis_);
-
-    this->blobs_[0].reset(new Blob<Dtype>(bottom[1]->shape(0), 1, bottom[1]->shape(axis_), bottom[0]->shape(axis_)));
+    this->blobs_[0].reset(new Blob<Dtype>(bottom[1]->shape(0), 1, query_size_, ref_size_));
 }
 
 template <typename Dtype>
@@ -133,62 +103,58 @@ void KnnLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
 
     for (int b = 0; b < batch_size; ++b) {
         // Process one query point at a time
-
-        const Dtype* cur_ref = ref + b * channels_ * ref_size_;
-        const Dtype* cur_query = query + b * channels_ * query_size_;
         for (int i = 0; i < query_size_; ++i) {
-            Dtype* dist = dist_mtx + (b * query_size_ + i) * ref_size_;
+            const int dist_index = (b * query_size_ + i) * ref_size_;
+            const int top_index = (b * query_size_ + i) * k_;
             // Compute all distances / indexes
             for (int j = 0; j < ref_size_; ++j) {
-                dist[j] = compute_distance(cur_ref, cur_query, j, i, ref_size_, query_size_, channels_);
+                Dtype sum = 0;
+                for (int c = 0; c < channels_; ++c) {
+                    sum += pow(ref[(b * channels_ + c) * ref_size_ + j] - query[(b * channels_ + c) * query_size_ + i], 2);
+                }
+                dist_mtx[dist_index + j] = sum;
             }
 
             // Sort distances / indexes
-            modified_insertion_sort(dist, k_index + ((b * query_size_) + i) * k_,
-                dist_out + ((b * query_size_) + i) * k_, ref_size_, k_);
+            modified_insertion_sort(dist_mtx, k_index,
+                dist_out, ref_size_, k_, dist_index, top_index);
         }
     }
 }
 
 template <typename Dtype>
-void KnnLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& bottom, const vector<bool>& propagate_down,
-    const vector<Blob<Dtype>*>& top)
+void KnnLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top, const vector<bool>& propagate_down,
+    const vector<Blob<Dtype>*>& bottom)
 {
     const Dtype* ref = bottom[0]->cpu_data();
     const Dtype* query = bottom[1]->cpu_data();
     const Dtype* k_index = top[0]->cpu_data();
+    const Dtype* top_diff = top[1]->cpu_diff();
 
     int batch_size = bottom[0]->shape(0);
 
-    if (propagate_down[0]) {
-        Dtype* bottom_diff_0 = bottom[0]->mutable_cpu_diff();
+    for (int bot = 0; bot < bottom.size(); ++bot) {
+        if (propagate_down[bot]) {
+            Dtype* bottom_diff = bottom[bot]->mutable_cpu_diff();
+            int sign = -2;
+            if (bot == 1)
+                sign = 2;
 
-        memset(bottom_diff_0, 0, sizeof(Dtype) * bottom[0]->count());
-        for (int b = 0; b < batch_size; ++b) {
-            for (int i = 0; i < query_size_; ++i) {
-                for (int j = 0; j < k_; ++j) {
-                    const int ref_row = k_index[(b * k_ + j) * query_size_ + i];
-                    for (int c = 0; c < channels_; ++c) {
-                        const int part_ind = (b * channels_ + c);
-                        const int ref_ind = part_ind * ref_size_ + ref_row;
-                        bottom_diff_0[ref_ind] += 2 * (query[part_ind * query_size_ + i] - ref[ref_ind]);
-                    }
-                }
-            }
-        }
-    }
-    if (propagate_down[1]) {
-        Dtype* bottom_diff_1 = bottom[1]->mutable_cpu_diff();
+            memset(bottom_diff, 0, sizeof(Dtype) * bottom[bot]->count());
+            for (int b = 0; b < batch_size; ++b) {
+                for (int i = 0; i < query_size_; ++i) {
+                    for (int j = 0; j < k_; ++j) {
+                        const int row_ind = (b * k_ + j) * query_size_ + i;
+                        const int ref_row = k_index[row_ind];
 
-        memset(bottom_diff_1, 0, sizeof(Dtype) * bottom[1]->count());
-        for (int b = 0; b < batch_size; ++b) {
-            for (int i = 0; i < query_size_; ++i) {
-                for (int j = 0; j < k_; ++j) {
-                    const int ref_row = k_index[(b * k_ + j) * query_size_ + i];
-                    for (int c = 0; c < channels_; ++c) {
-                        const int part_ind = (b * channels_ + c);
-                        const int ref_ind = part_ind * ref_size_ + ref_row;
-                        bottom_diff_1[part_ind * query_size_ + i] += 2 * (query[part_ind * query_size_ + i] - ref[ref_ind]);
+                        for (int c = 0; c < channels_; ++c) {
+                            const int part_ind = (b * channels_ + c);
+                            const int ref_ind = part_ind * ref_size_ + ref_row;
+                            const int query_ind = part_ind * query_size_ + i;
+
+                            bottom_diff[bot == 0 ? ref_ind : query_ind] += sign * (query[query_ind] - ref[ref_ind])
+                                * top_diff[row_ind];
+                        }
                     }
                 }
             }

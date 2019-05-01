@@ -4,7 +4,7 @@ endif()
 
 # Known NVIDIA GPU achitectures Caffe can be compiled for.
 # This list will be used for CUDA_ARCH_NAME = All option
-set(Caffe_known_gpu_archs "20 21(20) 30 35 50 60 61")
+set(Caffe_known_gpu_archs "30 35 50 60 61")
 
 ################################################################################################
 # A function for automatic detection of GPUs installed  (if autodetection is enabled)
@@ -56,7 +56,7 @@ endfunction()
 #   caffe_select_nvcc_arch_flags(out_variable)
 function(caffe_select_nvcc_arch_flags out_variable)
   # List of arch names
-  set(__archs_names "Fermi" "Kepler" "Maxwell" "Pascal" "All" "Manual")
+  set(__archs_names "Kepler" "Maxwell" "Pascal" "All" "Manual")
   set(__archs_name_default "All")
   if(NOT CMAKE_CROSSCOMPILING)
     list(APPEND __archs_names "Auto")
@@ -83,9 +83,7 @@ function(caffe_select_nvcc_arch_flags out_variable)
     unset(CUDA_ARCH_PTX CACHE)
   endif()
 
-  if(${CUDA_ARCH_NAME} STREQUAL "Fermi")
-    set(__cuda_arch_bin "20 21(20)")
-  elseif(${CUDA_ARCH_NAME} STREQUAL "Kepler")
+  if(${CUDA_ARCH_NAME} STREQUAL "Kepler")
     set(__cuda_arch_bin "30 35")
   elseif(${CUDA_ARCH_NAME} STREQUAL "Maxwell")
     set(__cuda_arch_bin "50")
@@ -108,12 +106,6 @@ function(caffe_select_nvcc_arch_flags out_variable)
 
   set(__nvcc_flags "")
   set(__nvcc_archs_readable "")
-
-  string(COMPARE LESS "${CUDA_VERSION}" "9.0" iscudaolderthan90)
-  if(NOT iscudaolderthan90)
-    string(REPLACE "21(20)" "" __cuda_arch_bin "${__cuda_arch_bin}")
-    string(REPLACE "20" "" __cuda_arch_bin "${__cuda_arch_bin}")
-  endif()
 
   # Tell NVCC to add binaries for the specified GPUs
   foreach(__arch ${__cuda_arch_bin})
